@@ -1,5 +1,5 @@
-function [fr, MMoverRand] = getErrorRateModMonaldoVsRandom(numTrials,...
-    maxTime, numJobs, numDataCenters, K, numPerms)
+function [fr, MMoverRand] = getGlobalErrorRateModMonaldo(numTrials,...
+    maxTime, numJobs, numDataCenters, K)
     
     % inputs
     %
@@ -11,17 +11,12 @@ function [fr, MMoverRand] = getErrorRateModMonaldoVsRandom(numTrials,...
     %   discrete uniform distribution that populates "P"
     %
     %   numJobs = a scalar equal to the number of jobs used across all
-    %   trials.
+    %   trials. numJobs must be less than 9.
     %
     %   numDataCenters = a scalar equal to the number of DataCenters for
     %   which jobs need to be scheduled.
     %
     %   K = a vector. K(dc) is the number of servers on DataCenter "dc."
-    %
-    %   numPerms = the number of random permutations used in comparison
-    %   against Modified-Monaldo. If a single one of these permutations
-    %   results in a better solution to (CPm | K | sum w_j * c_j) than
-    %   Modified-Monaldo then the trial is said to have "failed."
     
     % outputs
     %
@@ -30,15 +25,20 @@ function [fr, MMoverRand] = getErrorRateModMonaldoVsRandom(numTrials,...
     %   failures divided by the number of trials.
     %
     %   MMoverRand = the objective function value of Modified-Monaldo
-    %   divided by the objective function value of random permutations.
-    %   Less than 1 indicates Modified-Monaldo performed strictly better
-    %   than the best of "numPerms" random permutations. Greater than 1
-    %   indicates that Modified-Monaldo performed strictly worse than the
-    %   best of "numPerms" random permutations.
-
+    %   divided by the objective function value of the best of all
+    %   permutations for the given set of jobs.
+    
+    if (numJobs >= 9)
+       sprintf('ATTENTION!: The number of jobs is too high.');
+       sprintf('    The script will run for several hours, or days.');
+       sprintf('    Please cancel execution with ''control + c''');
+       sprintf('    Run again with no more than 8 jobs.'); 
+    end
+    
     W = ones(numJobs, 1);
     P = zeros(numJobs, numDataCenters, numTrials);
     bestPerm = zeros(numTrials, numJobs);
+    allPerms = perms(1:numJobs);
 
     for t = 1:numTrials
         P(:,:,t) = randi([1,maxTime], numJobs, numDataCenters);
@@ -46,9 +46,9 @@ function [fr, MMoverRand] = getErrorRateModMonaldoVsRandom(numTrials,...
         [DataCentersMonaldo{t}, jobCompletionTimesMonaldo{t}] = ...
             GreedilyFollowOrdering(K, P(:,:,t), monaldoSigma(t,:));
 
-        for i = 1:numPerms
+        for i = 1:length(allPerms)
             % Test numPerms random permutations. Record the best value
-            myPerm = randperm(numJobs);
+            myPerm = allPerms(i,:);
             [DataCentersRand{t}, output] = ...
                 GreedilyFollowOrdering(K, P(:,:,t), myPerm);
             if (i == 1)

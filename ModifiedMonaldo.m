@@ -44,7 +44,7 @@ function sigma = ModifiedMonaldo(K,P,W)
         sigma(k) = find((ratio == min(ratio)),1);
         theta = w(sigma(k)) / P(sigma(k),mu);
         w = w - theta * P(:,mu);
-        L = L - P(sigma(k),:);
+        L = L - P(sigma(k),:) ./ K;
         scheduled(sigma(k)) = 1;
     end
 end
