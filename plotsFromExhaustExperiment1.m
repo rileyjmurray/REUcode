@@ -1,5 +1,5 @@
 %% load Data
-load('experiment5.mat');
+load('exhaust_experiment1.mat');
 
 %% All
 
