@@ -1,5 +1,5 @@
-function fr = getErrorRateModMonaldoVsRandom(numTrials, maxTime,...
-    numJobs, numDataCenters, K, numPerms)
+function [fr, MMoverRand] = getErrorRateModMonaldoVsRandom(numTrials,...
+    maxTime, numJobs, numDataCenters, K, numPerms)
     
     % inputs
     %
@@ -60,4 +60,5 @@ function fr = getErrorRateModMonaldoVsRandom(numTrials, maxTime,...
 
     % save('lastRandP.mat','P');
     fr = sum(objValRand < objValMonaldo) / numTrials;
+    MMoverRand = mean(objValMonaldo ./ objValRand);
 end

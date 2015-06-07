@@ -29,7 +29,7 @@ function sigma = ModifiedMonaldo(K,P,W)
     end
     
     n = size(P,1);
-    sigma = zeros(1,n);s
+    sigma = zeros(1,n);
     scheduled = zeros(n,1);
     
     L = sum(P,1) ./ K;

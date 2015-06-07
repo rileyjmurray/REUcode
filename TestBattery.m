@@ -1,9 +1,9 @@
-numJ = 10:20:100;
+numJ = 10;
 numTrials = 50;
-maxT = 50;
-numDC = 1:5;
+maxT = 20;
+numDC = 2:5;
 kScalar = 1:5;
-numPerms = 10;
+numPerms = 50;
 
 % R is "results" matrix (in practice do analysis on "Inputs").
 R = zeros(length(numJ), length(maxT), length(numDC), length(kScalar));
@@ -11,7 +11,7 @@ Inputs = zeros(length(numJ) * length(maxT) * length(numDC) *...
     length(kScalar),4);
 
 % FailureRate(row) is the FailureRate of Inputs(row,:)
-FailureRate = zeros(size(Inputs,1));
+Outputs = zeros(size(Inputs,1),2);
 
 row = 1;
 for i = 1:length(numJ)
@@ -21,7 +21,7 @@ for i = 1:length(numJ)
                 progress = [i / length(numJ), j / length(maxT),...
                     k / length(numDC), l / length(kScalar)];
                 display(progress);
-                R(i,j,k,l) = getErrorRateModMonaldoVsRandom(...
+                [R(i,j,k,l), perfRat] = getErrorRateModMonaldoVsRandom(...
                     numTrials,...
                     maxT(j),...
                     numJ(i),...
@@ -29,7 +29,8 @@ for i = 1:length(numJ)
                     kScalar(l) * ones(1,numDC(k)),...
                     numPerms);
                 Inputs(row,:) = [maxT(j), numJ(i), numDC(k),kScalar(l)];
-                FailureRate(row) = R(i,j,k,l);
+                Outputs(row,1) = R(i,j,k,l); % FailureRate
+                Outputs(row,2) = perfRat; % mean(ObjVal_Rand / ObjVal_MM)
                 row = row + 1;
             end
         end
