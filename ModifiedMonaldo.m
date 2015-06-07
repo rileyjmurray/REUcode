@@ -2,18 +2,27 @@ function sigma = ModifiedMonaldo(K,P,W)
     
     COMPLETE_FACTOR = 10^6;
 
-    % problem: CPm | 1 , prec | \sum_{j} W_j * C_j
+    % problem: CPm | 1 | \sum_{j} W_j * C_j
 
     % Inputs:
+    %
     % P = matrix of processing times, 
     %   one job per row
     %   one datacenter per column (because one datacenter per task)
     % *** OR *** P = one-by-three vector
-    %   P(1) = number of jobs,
-    %   P(2) = number of datacenters, 
-    %   P(3) = maximum processing time (used in discrete uniform
-    %   distribution)
+    %               P(1) = number of jobs,
+    %               P(2) = number of datacenters, 
+    %               P(3) = maximum processing time (used in discrete 
+    %                   uniform distribution)
+    %
     % W = weights
+    %
+    % K = a vector of number of servers for each DataCenter.
+    %   K(dc) is the number of servers on DataCenter "dc."
+    
+    % outputs
+    %
+    % sigma = the order in which jobs will be post processed.
     
     if (size(P,1) == 1 && size(P,2) == 3)
         P = randi([1,P(3)],P(1),P(2));

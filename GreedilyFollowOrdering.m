@@ -1,9 +1,11 @@
 function [DataCenters, jobCompletionTimes] = GreedilyFollowOrdering(K,P,C)
     
-    % problem: CPm | k , prec | \sum_{j} C_j
+    % problem: CPm | K | \sum_{j} C_j
 
     % Inputs:
+    %
     % K = number of servers per datacenter
+    %
     % P = matrix of processing times, 
     %   one job per row
     %   one datacenter per column (because one datacenter per task)
@@ -12,16 +14,18 @@ function [DataCenters, jobCompletionTimes] = GreedilyFollowOrdering(K,P,C)
     %   P(2) = number of datacenters, 
     %   P(3) = maximum processing time (used in discrete uniform
     %   distribution)
+    %
     % C = ordering constraint. Jobs will be scheduled in order C(1),
     %   C(2),..., C(n)
 
     % Output:
-    % D = 3 dimensional matrix
-    %   first dimension be datacenter
-    %   second dimension be servers
-    %   third dimension be job / task
     %
-    % objVal = objective function value (sum C_j)
+    % DataCenters = a cell array. DataCenters{dc} is the set of servers at
+    % DataCenter "dc." The set of servers is size 1-x-K(dc). A given server
+    % is referenced by DataCenters{dc}(svr).
+    %
+    % jobCompletionTimes = vector. jobCompletionTimes(j) is the time at
+    % which job "j" completes.
     
     if (size(P,1) == 1 && size(P,2) == 3)
         P = randi([0,P(3)],P(1),P(2));

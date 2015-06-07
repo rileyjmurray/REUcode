@@ -5,9 +5,12 @@ numDC = 1:5;
 kScalar = 1:5;
 numPerms = 10;
 
+% R is "results" matrix (in practice do analysis on "Inputs").
 R = zeros(length(numJ), length(maxT), length(numDC), length(kScalar));
 Inputs = zeros(length(numJ) * length(maxT) * length(numDC) *...
     length(kScalar),4);
+
+% FailureRate(row) is the FailureRate of Inputs(row,:)
 FailureRate = zeros(size(Inputs,1));
 
 row = 1;
@@ -32,8 +35,3 @@ for i = 1:length(numJ)
         end
     end
 end
-
-
-
-
-
