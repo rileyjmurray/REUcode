@@ -1,8 +1,8 @@
 numJ = 7;
-numTrials = 10;
+numTrials = 20;
 maxT = 20;
-numDC = [2,4,5];
-kScalar = [1,2,5];
+numDC = [2,3,4,5];
+kScalar = [1,2,3,4,5];
 
 % R is "results" matrix (in practice do analysis on "Inputs").
 R = zeros(length(numJ), length(maxT), length(numDC), length(kScalar));

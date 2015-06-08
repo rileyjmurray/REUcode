@@ -102,7 +102,11 @@ clear;
 load('experiment4.mat');
 run plotsFromExperiment4;
 
-%% First Exhaustive Experiment : Compare Modified-Monaldo against all possible permutations.
+%% Second Exhaustive Experiment : Compare Modified-Monaldo against all possible permutations.
+%
+% Note: this experiment searched over the space considered by the "first
+% exhaustive experiment" and more. As a result, the "first exhaustive
+% experiment" is not reported.
 %
 % We considered only 7 jobs as 7! = 5040 already represented a significant
 % amount of computing time. The small number of jobs is of little
@@ -120,5 +124,5 @@ run plotsFromExperiment4;
 % only serves to offer guidance on a next step.
 %
 clear;
-load('exhaust_experiment1.mat');
-run plotsFromExhaustExperiment1;
+load('exhaust_experiment2.mat');
+run plotsFromExhaustExperiment2;
