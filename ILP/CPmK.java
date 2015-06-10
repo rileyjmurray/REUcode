@@ -30,10 +30,10 @@ public class CPmK {
 		n = p.length;
 		m = p[0].length;
 		out = output;
-		out.println(solveIP());
+		solveIP();
 	}
 
-	public static int solveIP() throws Throwable {
+	public static void solveIP() throws Throwable {
 		GRBEnv env = new GRBEnv("CPmK.log"); //logistics
 		GRBModel model = new GRBModel(env);
 
@@ -80,7 +80,6 @@ public class CPmK {
 				for (int i2 = 1; i2 <= n; i2++) {
 					if (i1 != i2) {
 						ys.addTerm(2.0, Y.get(k+","+i1+","+i2));
-						System.out.println("Adding y_"+k+","+i1+","+ i2);
 						for (int l = 1; l <= r; l++) {
 							GRBLinExpr left = new GRBLinExpr();
 							left.addTerm(1.0, Y.get(k+","+i1+","+i2));
@@ -116,9 +115,10 @@ public class CPmK {
 				model.addConstr(left, GRB.GREATER_EQUAL, p[i1-1][k-1], "7");
 			}
 		}
-		System.out.println(n*(n-1));
 		model.addConstr(ys, GRB.EQUAL, m*n*(n-1), "no");
 
+
+		TreeMap<String, GRBConstr> troubleSome = new TreeMap<String, GRBConstr>();
 		for (int k = 1; k <= m; k++) {
 			for (int i1 = 1; i1 <= n; i1++) {
 				for (int i2 = 1; i2 < i1; i2++) {
@@ -132,9 +132,8 @@ public class CPmK {
 					GRBLinExpr left = new GRBLinExpr();
 					left.addTerm(1.0, Y.get(k+","+i1+","+i2));
 					left.addTerm(1.0, Y.get(k+","+i2+","+i1));
-					//System.out.println("making y for jobs "+i1+","+i2);
-					//System.out.println(Y.get(k+","+i1+","+i2) + " " + Y.get(k+","+i2+","+i1));
-					model.addConstr(left, GRB.EQUAL, 1.0, "5");
+					String str = i1 + " < " + i2 + "   OR   " + i2 + " < " + i1;
+					troubleSome.put(str, model.addConstr(left, GRB.EQUAL, 1.0, "5"));
 				}
 			}
 		}
@@ -199,16 +198,16 @@ public class CPmK {
 			int y[][][] = new int[m][n][n];
 			int yTotal = 0;
 			for (String k: Y.keySet()) {
-				System.out.print("y_"+k+": ");
+				//System.out.print("y_"+k+": ");
 				StringTokenizer st = new StringTokenizer(k,",");
 				int j = Integer.parseInt(st.nextToken())-1;
 				int i1 = Integer.parseInt(st.nextToken())-1;
 				int i2 = Integer.parseInt(st.nextToken())-1;
-				y[j][i1][i2] = (int)(Y.get(k).get(GRB.DoubleAttr.X));
-				System.out.println(y[j][i1][i2]);
+				y[j][i1][i2] = (int) Math.round((Y.get(k).get(GRB.DoubleAttr.X)));
+				//System.out.println(y[j][i1][i2]);
 				yTotal+= y[j][i1][i2];
-			} System.out.println(yTotal);
-			System.out.println();
+			}
+			//System.out.println();
 			
 			int z[][] = new int[m][n];
 			for (String k: Z.keySet()) {
@@ -249,6 +248,7 @@ public class CPmK {
 				}
 			}
 			
+			System.out.println();
 			for (int j = 0; j < m; j++) {
 				System.out.println("DC "+(j+1));
 				for (int l = 0; l < r; l++) {
@@ -284,7 +284,8 @@ public class CPmK {
 				}
 				jobs.add(index,(i+1));
 			}
-			
+
+			System.out.println();
 			System.out.print("Ordering: ");
 			System.out.println(jobs);
 			System.out.println();
@@ -313,10 +314,9 @@ public class CPmK {
 				wTotal += w[i-1]*c[i-1];
 			}
 			System.out.println();
-			
 			System.out.println("Completion time: " + total);
 			System.out.println("Weighted completion time: " + wTotal);
-			
+			System.out.println();
 		}
 
 		else if (status == GRB.Status.INFEASIBLE) {
@@ -335,7 +335,16 @@ public class CPmK {
 		// ----- clean up
 		model.dispose();
 		env.dispose();
-		return 0;
+	}
+
+	public static void printConstraintInfo(TreeMap<String, GRBConstr> t) throws Throwable {
+		for (String str : t.keySet()) {
+			System.out.println(str);
+			GRBConstr c = t.get(str);
+			System.out.println("     Sense?      " + c.get(GRB.CharAttr.Sense) + "");
+			System.out.println("     RHS?      " + c.get(GRB.DoubleAttr.RHS) + "");
+			System.out.println("     Slack?      " + c.get(GRB.DoubleAttr.Slack) + "");
+		}
 	}
 
 }
