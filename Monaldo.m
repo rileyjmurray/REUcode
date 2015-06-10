@@ -1,7 +1,7 @@
 function sigma = Monaldo(P,W)
-    
-    COMPLETE_FACTOR = 10^6;
 
+    tol = 1.e-10;
+    
     % problem: CPm | 1 | \sum_{j} W_j * C_j
 
     % Inputs:
@@ -36,11 +36,13 @@ function sigma = Monaldo(P,W)
         mu = find((L == max(L)),1);
         ratio = w ./ P(:,mu);
         if (idx > 1)
-            ratio(scheduled == 1) = COMPLETE_FACTOR; 
+            ratio(scheduled == 1) = Inf;
         end
         sigma(k) = find((ratio == min(ratio)),1);
         theta = w(sigma(k)) / P(sigma(k),mu);
-        w = w - theta * P(:,mu);
+        w(scheduled == 0) = w(scheduled == 0) ...
+            - theta * P(scheduled == 0, mu);
+        w(w < 0 & w > -tol) = 0;
         L = L - P(sigma(k),:);
         scheduled(sigma(k)) = 1;
     end
