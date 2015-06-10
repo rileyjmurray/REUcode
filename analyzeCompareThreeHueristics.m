@@ -18,7 +18,3 @@ subplot(3,1,3);
 hist(Outputs(2,:) ./ Outputs(3,:),500);
 title('Pre / Awk');
 mean(Outputs(2,:) ./ Outputs(3,:))
-
-%%
-[out1Sort, ~] = sort(Outputs(1,:));
-plot(out1Sort(20000:30000));
