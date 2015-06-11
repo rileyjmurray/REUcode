@@ -10,10 +10,10 @@ public class CPmK {
 	private static int n; // number of jobs
 	private static int m; // number of data centers
 	private static int r = 2; // number of servers
-	private static double bigM = Math.pow(10, 6);
+	private static double bigM = 1000;
 	private static int[][] p;
 	private static int[] w;
-	private static PrintWriter out;
+	//private static PrintWriter out;
 
 	public static void main(String[] args) throws Throwable {
 		PrintWriter output = new PrintWriter(new BufferedWriter(new FileWriter("output.txt")));
@@ -29,7 +29,7 @@ public class CPmK {
 		w = weight;
 		n = p.length;
 		m = p[0].length;
-		out = output;
+		//out = output;
 		solveIP();
 	}
 
@@ -101,7 +101,9 @@ public class CPmK {
 						GRBLinExpr right = new GRBLinExpr();
 						right.addTerm(1.0, Z.get(k+","+i2));
 						right.addTerm(-1.0, Z.get(k+","+i1));
-						model.addConstr(left, GRB.GREATER_EQUAL, right, "4");
+						model.addConstr(left, GRB.GREATER_EQUAL, right, "4a");
+						right.addTerm(-1*bigM,  Y.get(k+","+i1+","+i2));
+						model.addConstr(right, GRB.GREATER_EQUAL, -1*bigM, "4b");
 						
 						if (k!=m) {
 							model.addConstr(Y.get(k+","+i1+","+i2), GRB.EQUAL, Y.get((k+1)+","+i1+","+i2), "6");
@@ -180,8 +182,9 @@ public class CPmK {
 		model.update();
 
 		/** SOLVE IP */
-		model.getEnv().set(GRB.IntParam.OutputFlag, 0); // suppress Gurobi output
+		model.getEnv().set(GRB.IntParam.OutputFlag, 1); // suppress Gurobi output
 		model.optimize();
+		System.out.println();
 		int status = model.get(GRB.IntAttr.Status);	// 2 opt; 3 infeas; 9 timed out
 
 		if (status == GRB.Status.OPTIMAL) {
@@ -192,29 +195,26 @@ public class CPmK {
 				int i1 = Integer.parseInt(st.nextToken())-1;
 				int i2 = Integer.parseInt(st.nextToken())-1;
 				int l = Integer.parseInt(st.nextToken())-1;
-				x[j][i1][i2][l] = (int)(X.get(k).get(GRB.DoubleAttr.X));
+				x[j][i1][i2][l] = (int) Math.round(X.get(k).get(GRB.DoubleAttr.X));
 			}
 			
-			int y[][][] = new int[m][n][n];
-			int yTotal = 0;
+			int y[][][] = new int[m][n][n];;
 			for (String k: Y.keySet()) {
 				//System.out.print("y_"+k+": ");
 				StringTokenizer st = new StringTokenizer(k,",");
 				int j = Integer.parseInt(st.nextToken())-1;
 				int i1 = Integer.parseInt(st.nextToken())-1;
 				int i2 = Integer.parseInt(st.nextToken())-1;
-				y[j][i1][i2] = (int) Math.round((Y.get(k).get(GRB.DoubleAttr.X)));
+				y[j][i1][i2] = (int) Math.round(Y.get(k).get(GRB.DoubleAttr.X));
 				//System.out.println(y[j][i1][i2]);
-				yTotal+= y[j][i1][i2];
 			}
-			//System.out.println();
 			
 			int z[][] = new int[m][n];
 			for (String k: Z.keySet()) {
 				StringTokenizer st = new StringTokenizer(k,",");
 				int j = Integer.parseInt(st.nextToken())-1;
 				int i = Integer.parseInt(st.nextToken())-1;
-				z[j][i] = (int)(Z.get(k).get(GRB.DoubleAttr.X));
+				z[j][i] = (int) Math.round(Z.get(k).get(GRB.DoubleAttr.X));
 			}
 
 			int s[][][] = new int[m][n][r];
@@ -223,7 +223,7 @@ public class CPmK {
 				int j = Integer.parseInt(st.nextToken())-1;
 				int i = Integer.parseInt(st.nextToken())-1;
 				int l = Integer.parseInt(st.nextToken())-1;
-				s[j][i][l] = (int)(S.get(k).get(GRB.DoubleAttr.X));
+				s[j][i][l] = (int) Math.round(S.get(k).get(GRB.DoubleAttr.X));
 			}
 			
 			TreeMap<String,ArrayList<int[]>> chart = new TreeMap<String,ArrayList<int[]>>();
@@ -247,8 +247,7 @@ public class CPmK {
 					}
 				}
 			}
-			
-			System.out.println();
+
 			for (int j = 0; j < m; j++) {
 				System.out.println("DC "+(j+1));
 				for (int l = 0; l < r; l++) {
