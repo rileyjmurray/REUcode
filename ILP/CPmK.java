@@ -74,6 +74,7 @@ public class CPmK {
 
 		model.update();
 
+		TreeMap<String, GRBConstr> troubleSomeC4 = new TreeMap<String, GRBConstr>();
 		/** ADDING CONSTRAINTS HERE*/
 		GRBLinExpr ys = new GRBLinExpr();
 		for (int k = 1; k <= m; k++) {
@@ -102,9 +103,15 @@ public class CPmK {
 						GRBLinExpr right = new GRBLinExpr();
 						right.addTerm(1.0, Z.get(k+","+i2));
 						right.addTerm(-1.0, Z.get(k+","+i1));
-						model.addConstr(left, GRB.GREATER_EQUAL, right, "4a");
+						//model.addConstr(left, GRB.GREATER_EQUAL, right, "4a");
+						String str = (k+","+i2) + " pos | neg " + (k+","+i1) + " --> <= M * y_" +  (k+","+i1+","+i2);
+						troubleSomeC4.put(str,model.addConstr(left, GRB.GREATER_EQUAL, right, "4a"));
+
 						right.addTerm(-1*bigM,  Y.get(k+","+i1+","+i2));
-						model.addConstr(right, GRB.GREATER_EQUAL, -1*bigM, "4b");
+						str = (k+","+i2) + " pos | neg " + (k+","+i1) + " --> >= M * (1 - y_" 
+							+  (k+","+i1+","+i2) + ")";
+						//model.addConstr(right, GRB.GREATER_EQUAL, -1*bigM, "4b");
+						troubleSomeC4.put(str, model.addConstr(right, GRB.GREATER_EQUAL, -1*bigM, "4b"));
 						
 						if (k!=m) {
 							model.addConstr(Y.get(k+","+i1+","+i2), GRB.EQUAL, Y.get((k+1)+","+i1+","+i2), "6");
@@ -322,6 +329,7 @@ public class CPmK {
 			System.out.println("Completion time: " + total);
 			System.out.println("Weighted completion time: " + wTotal);
 			System.out.println();
+			printConstraintInfo(troubleSomeC4);
 		}
 
 		else if (status == GRB.Status.INFEASIBLE) {
