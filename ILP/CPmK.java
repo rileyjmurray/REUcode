@@ -10,7 +10,7 @@ public class CPmK {
 	private static int n; // number of jobs
 	private static int m; // number of data centers
 	private static int r = 2; // number of servers
-	private static double bigM = 1000;
+	private static double bigM = 99999.9999999;
 	private static int[][] p;
 	private static int[] w;
 	//private static PrintWriter out;
@@ -35,6 +35,7 @@ public class CPmK {
 
 	public static void solveIP() throws Throwable {
 		GRBEnv env = new GRBEnv("CPmK.log"); //logistics
+		//env.set(GRB.IntParam.NumericFocus, 3);
 		GRBModel model = new GRBModel(env);
 
 		/** ADDING VARIABLES HERE*/
@@ -57,7 +58,7 @@ public class CPmK {
 					}
 				}
 				String label = k+","+i1;
-				Z.put(label, model.addVar(0.0, Integer.MAX_VALUE, 0.0, GRB.INTEGER, "z_"+label)); // z
+				Z.put(label, model.addVar(0.0, Integer.MAX_VALUE, 0.0, GRB.CONTINUOUS, "z_"+label)); // z
 				
 				for (int l = 1; l <= r; l++) {
 					label = k+","+i1+","+l;
@@ -134,8 +135,9 @@ public class CPmK {
 					GRBLinExpr left = new GRBLinExpr();
 					left.addTerm(1.0, Y.get(k+","+i1+","+i2));
 					left.addTerm(1.0, Y.get(k+","+i2+","+i1));
-					String str = i1 + " < " + i2 + "   OR   " + i2 + " < " + i1;
-					troubleSome.put(str, model.addConstr(left, GRB.EQUAL, 1.0, "5"));
+					//String str = i1 + " < " + i2 + "   OR   " + i2 + " < " + i1;
+					//troubleSome.put(str, model.addConstr(left, GRB.EQUAL, 1.0, "5"));
+					model.addConstr(left, GRB.EQUAL, 1.0, "5");
 				}
 			}
 		}
@@ -200,22 +202,26 @@ public class CPmK {
 			
 			int y[][][] = new int[m][n][n];;
 			for (String k: Y.keySet()) {
-				//System.out.print("y_"+k+": ");
+				System.out.print("y_"+k+": ");
 				StringTokenizer st = new StringTokenizer(k,",");
 				int j = Integer.parseInt(st.nextToken())-1;
 				int i1 = Integer.parseInt(st.nextToken())-1;
 				int i2 = Integer.parseInt(st.nextToken())-1;
 				y[j][i1][i2] = (int) Math.round(Y.get(k).get(GRB.DoubleAttr.X));
-				//System.out.println(y[j][i1][i2]);
+				System.out.println(y[j][i1][i2]);
 			}
+			System.out.println();
 			
 			int z[][] = new int[m][n];
 			for (String k: Z.keySet()) {
+				System.out.print("z_"+k+": ");
 				StringTokenizer st = new StringTokenizer(k,",");
 				int j = Integer.parseInt(st.nextToken())-1;
 				int i = Integer.parseInt(st.nextToken())-1;
 				z[j][i] = (int) Math.round(Z.get(k).get(GRB.DoubleAttr.X));
+				System.out.println(Z.get(k).get(GRB.DoubleAttr.X));
 			}
+			System.out.println();
 
 			int s[][][] = new int[m][n][r];
 			for (String k: S.keySet()) {
