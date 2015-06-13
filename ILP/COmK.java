@@ -38,8 +38,8 @@ public class COmK {
 		try {
 			PrintWriter output = new PrintWriter(new BufferedWriter(new FileWriter("output.txt")));
 			double[][] p = {{1,2,6},{3,1,9},{2,3,7},{1,1,3},{3,2,5},
-								{3,6,8},{12,3,7}};
-			double[] w = {1,2,3,4,5,6,7,8};
+								{3,6,8},{5,9,1},{3,10,2},{5,4,11},{5,1,1}};
+			double[] w = {1,2,3,4,5,6,7,8,9,10};
 			int[] serversArg = {2,2,3};
 			COmK instance = new COmK(p, w, serversArg);
 			instance.defineDecisionVariables();
@@ -68,6 +68,7 @@ public class COmK {
 			model = new GRBModel(env);
 			model.getEnv().set(GRB.IntParam.LogToConsole, 0); // do not print to console
 			model.getEnv().set(GRB.IntParam.DisplayInterval, 300); // 5 minute logging
+			model.getEnv().set(GRB.IntParam.Threads, 4); // use 4 cores
 		} catch (GRBException e) {
 			e.printStackTrace();
 		}
