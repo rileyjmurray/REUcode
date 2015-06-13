@@ -22,12 +22,12 @@ public class COmK {
 	private	TreeMap<Integer, GRBVar> C; // completion times
 	private TreeMap<String, GRBVar> R; // time a job spends on a server
 	// Gurobi
-	private static double bigM = 100000;
+	private static double bigM = 10000;
 	private GRBEnv env;
 	private GRBModel model;
 	// Model Ouput
 	private ArrayList<Integer[][][]> x;
-	private int[][][] y;
+	private int[][] y;
 	private ArrayList<Integer[][]> s;
 	private double[][] z;
 	private ArrayList<Double[][]> r;
@@ -37,9 +37,10 @@ public class COmK {
 	public static void main(String[] args) {
 		try {
 			PrintWriter output = new PrintWriter(new BufferedWriter(new FileWriter("output.txt")));
-			double[][] p = {{1,2},{3,1},{2,3},{1,1},{3,2}};
-			double[] w = {1,2,3,4,5};
-			int[] serversArg = {2,2};
+			double[][] p = {{1,2,6},{3,1,9},{2,3,7},{1,1,3},{3,2,5},
+								{3,6,8},{12,3,7}};
+			double[] w = {1,2,3,4,5,6,7,8};
+			int[] serversArg = {2,2,3};
 			COmK instance = new COmK(p, w, serversArg);
 			instance.defineDecisionVariables();
 			instance.buildConstraints();
@@ -63,9 +64,10 @@ public class COmK {
 		m = p[0].length;
 		servers = serversArg;
 		try {
-			env = new GRBEnv("CPmK.log");
+			env = new GRBEnv("COmK.log");
 			model = new GRBModel(env);
-			model.getEnv().set(GRB.IntParam.OutputFlag, 0); // suppress Gurobi output
+			model.getEnv().set(GRB.IntParam.LogToConsole, 0); // do not print to console
+			model.getEnv().set(GRB.IntParam.DisplayInterval, 300); // 5 minute logging
 		} catch (GRBException e) {
 			e.printStackTrace();
 		}
@@ -88,7 +90,7 @@ public class COmK {
 							String label = k+","+i1+","+i2+","+l;
 							X.put(label, model.addVar(0.0, Integer.MAX_VALUE, 0.0, GRB.BINARY, "x_"+label)); // x
 						}
-						String label = k+","+i1+","+i2;
+						String label = i1+","+i2;
 						Y.put(label, model.addVar(0.0, Integer.MAX_VALUE, 0.0, GRB.BINARY, "y_"+label)); // y
 					}
 				}
@@ -122,7 +124,6 @@ public class COmK {
 		 * (5b) : start times for a job on a datacenter
 		 * (6) : transitivity in the job ordering
 		 * (7) : the competion time for a job must be less than or equal to the completion time of all tasks
-		 * (8) : all datacenters must have the same ordering
 		 */
 
 		/*
@@ -140,35 +141,21 @@ public class COmK {
 				for (int i2 = 1; i2 <= n; i2++) {
 					if (i1 != i2) {
 
-
-						if (k != m) {
-							GRBLinExpr left8 = new GRBLinExpr();
-							GRBLinExpr right8 = new GRBLinExpr();
-							left8.addTerm(1.0, Y.get(k + "," + i1 + "," + i2));
-							right8.addTerm(1.0, Y.get((k + 1) + "," + i1 + "," + i2));
-							model.addConstr(left8, GRB.EQUAL, right8, "(8)");
-						}
-
 						GRBLinExpr left3a = new GRBLinExpr();
 						GRBLinExpr right3a = new GRBLinExpr();
 						GRBLinExpr left3b = new GRBLinExpr();
 
-						left3a.addTerm(bigM, Y.get(k + "," + i1 + "," + i2));
+						left3a.addTerm(bigM, Y.get(i1 + "," + i2));
 						right3a.addTerm(-1.0, Z.get(k + "," + i1));
 						right3a.addTerm(1.0, Z.get(k + "," + i2));
 						model.addConstr(left3a, GRB.GREATER_EQUAL, right3a, "(3a)");
 
 						left3b.addTerm(-1.0, Z.get(k + "," + i1));
-						left3b.addTerm(-1.0 * bigM, Y.get(k + "," + i1 + "," + i2));
+						left3b.addTerm(-1.0 * bigM, Y.get(i1 + "," + i2));
 						left3b.addTerm(1.0, Z.get(k + "," + i2));
 						model.addConstr(left3b, GRB.GREATER_EQUAL, -1.0 * bigM, "(3b)");
 
-
 						for (int l = 1; l <= servers[k-1]; l++) {
-							GRBLinExpr left1 = new GRBLinExpr();
-							left1.addTerm(1.0, Y.get(k + "," + i1 + "," + i2));
-							left1.addTerm(1.0, Y.get(k + "," + i2 + "," + i1));
-							model.addConstr(left1, GRB.EQUAL, 1.0, "(1)");
 
 							GRBLinExpr left4abc = new GRBLinExpr();
 							GRBLinExpr left4d = new GRBLinExpr();
@@ -176,7 +163,7 @@ public class COmK {
 							GRBLinExpr right4b = new GRBLinExpr();
 							GRBLinExpr right4c = new GRBLinExpr();
 							left4abc.addTerm(1.0, X.get(k + "," + i1 + "," + i2 + "," + l));
-							right4a.addTerm(1.0, Y.get(k + "," + i1 + "," + i2));
+							right4a.addTerm(1.0, Y.get(i1 + "," + i2));
 							right4b.addTerm(1.0, S.get(k + "," + i1 + "," + l));
 							right4c.addTerm(1.0, S.get(k + "," + i2 + "," + l));
 							model.addConstr(left4abc, GRB.LESS_EQUAL, right4a, "(4a)");
@@ -184,22 +171,32 @@ public class COmK {
 							model.addConstr(left4abc, GRB.LESS_EQUAL, right4c, "(4c)");
 							left4d.addTerm(1.0, S.get(k + "," + i1 + "," + l));
 							left4d.addTerm(1.0, S.get(k + "," + i2 + "," + l));
-							left4d.addTerm(1.0, Y.get(k + "," + i1 + "," + i2));
+							left4d.addTerm(1.0, Y.get(i1 + "," + i2));
 							left4d.addTerm(-1.0, X.get(k + "," + i1 + "," + i2 + "," + l));
 							model.addConstr(left4d, GRB.LESS_EQUAL, 2.0, "(4d)");
 						}
-
-						for (int i3 = 1; i3 <= n; i3++) {
-							if (i2 != i3 && i1 != i3) {
-								GRBLinExpr left6 = new GRBLinExpr();
-								left6.addTerm(1.0, Y.get(k + "," + i1 + "," + i2));
-								left6.addTerm(1.0, Y.get(k + "," + i2 + "," + i3));
-								left6.addTerm(-1.0, Y.get(k + "," + i1 + "," + i3));
-								model.addConstr(left6, GRB.LESS_EQUAL, 1.0, "(6)");
-							}
-						}
 					}
 				}
+			}
+		}
+
+		for (int i1 = 1; i1 <= n; i1++) {
+			for (int i2 = 1; i2 < i1; i2++) {
+
+					GRBLinExpr left1 = new GRBLinExpr();
+					left1.addTerm(1.0, Y.get(i1 + "," + i2));
+					left1.addTerm(1.0, Y.get(i2 + "," + i1));
+					model.addConstr(left1, GRB.EQUAL, 1.0, "(1)");
+
+					for (int i3 = 1; i3 <= n; i3++) {
+							if (i1 != i3 && i2 != i3) {
+								GRBLinExpr left6 = new GRBLinExpr();
+								left6.addTerm(1.0, Y.get(i1 + "," + i2));
+								left6.addTerm(1.0, Y.get(i2 + "," + i3));
+								left6.addTerm(-1.0, Y.get(i1 + "," + i3));
+								model.addConstr(left6, GRB.LESS_EQUAL, 1.0, "(6)");
+							}
+					}
 			}
 		}
 
@@ -259,6 +256,8 @@ public class COmK {
 		Integer status = model.get(GRB.IntAttr.Status);	// 2 opt; 3 infeas; 9 timed out
 		if (status.equals(GRB.Status.OPTIMAL)) {
 			populateVariableMatrices();
+			String objOut = String.format("\n Total weighted completion time:   %.2f", model.get(GRB.DoubleAttr.ObjVal));
+			System.out.println(objOut);
 		} else if (status.equals(GRB.Status.INFEASIBLE)) {
 			System.out.println("infeasible");
 		} else if (status.equals(GRB.Status.TIME_LIMIT)) {
@@ -279,7 +278,7 @@ public class COmK {
 			s.add(k-1, new Integer[n][servers[k-1]]);
 			r.add(k-1, new Double[n][servers[k-1]]);
 		}
-		y = new int[m][n][n];
+		y = new int[n][n];
 		z = new double[m][n];
 		c = new double[n];
 
@@ -295,10 +294,9 @@ public class COmK {
 		
 		for (String k : Y.keySet()) {
 			StringTokenizer st = new StringTokenizer(k,",");
-			int j = Integer.parseInt(st.nextToken())-1;
 			int i1 = Integer.parseInt(st.nextToken())-1;
 			int i2 = Integer.parseInt(st.nextToken())-1;
-			y[j][i1][i2] = (int) Math.round(Y.get(k).get(GRB.DoubleAttr.X));
+			y[i1][i2] = (int) Math.round(Y.get(k).get(GRB.DoubleAttr.X));
 		}
 
 		for (String k : S.keySet()) {
@@ -313,7 +311,11 @@ public class COmK {
 			StringTokenizer st = new StringTokenizer(k,",");
 			int j = Integer.parseInt(st.nextToken())-1;
 			int i = Integer.parseInt(st.nextToken())-1;
-			z[j][i] = Z.get(k).get(GRB.DoubleAttr.X);
+			if (Z.get(k).get(GRB.DoubleAttr.X) <= 0.0) {
+				z[j][i] = 0.0;
+			} else {
+				z[j][i] = Z.get(k).get(GRB.DoubleAttr.X);
+			}
 		}
 
 		for (Integer k : C.keySet()) {
@@ -344,7 +346,7 @@ public class COmK {
 			int pos = 0;
 			sb.append("Job " + (i1 + 1) + " < ");
 			for (int i2 = 0; i2 < n; i2++) {
-				if (y[0][i1][i2] == 1) {
+				if (y[i1][i2] == 1) {
 					sb.append((i2 + 1) + ", ");
 					pos = pos + 1;
 				}
