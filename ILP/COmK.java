@@ -37,10 +37,10 @@ public class COmK {
 	public static void main(String[] args) {
 		try {
 			PrintWriter output = new PrintWriter(new BufferedWriter(new FileWriter("output.txt")));
-			double[][] p = {{1,2,6},{3,1,9},{2,3,7},{1,1,3},{3,2,5},
-								{3,6,8},{5,9,1},{3,10,2},{5,4,11},{5,1,1}};
-			double[] w = {1,2,3,4,5,6,7,8,9,10};
-			int[] serversArg = {2,2,3};
+			double[][] p = {{25,10}, {1,1}, {1,1}, {1,1}, {1,1}, {1,1}, {1,1},
+				{1,1}, {1,1}, {1,1}};
+			double[] w = {5, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+			int[] serversArg = {2,1};
 			COmK instance = new COmK(p, w, serversArg);
 			instance.defineDecisionVariables();
 			instance.buildConstraints();
