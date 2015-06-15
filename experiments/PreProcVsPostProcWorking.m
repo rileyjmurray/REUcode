@@ -8,15 +8,15 @@ maxK = 5;
 numDC = 5;
 
 results = zeros(2,numTrials);
-%P = zeros(numJ, numDC, numTrials);
-%K = zeros(numTrials, numDC);
+P = zeros(numJ, numDC, numTrials);
+K = zeros(numTrials, numDC);
 
 for i = 1:numTrials
    if (mod(i,100) == 0)
        display(sprintf(strcat(num2str(i/numTrials * 100),'_percent done'))); 
    end
-   %P(:,:,i) = randi([0,maxT], numJ, numDC);
-   %K(i,:) = randi([1,maxK], 1, numDC);
+   P(:,:,i) = randi([0,maxT], numJ, numDC);
+   K(i,:) = randi([1,maxK], 1, numDC);
    % W = 10 * rand(numJ, 1);
    W = ones(numJ, 1);
    sigmaMod = ModifiedMonaldo(K(i,:), P(:,:,i), W);

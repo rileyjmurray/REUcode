@@ -1,6 +1,6 @@
 %% Examine problem instances for which Mod-Monaldo performs ~ 2x as poor as other hueristics.
 
-load('oneMillion.mat');
+load('experiments/oneMillion.mat');
 cutoff = 1.5;
 normIdx = (results(1,:) < cutoff);
 badIdx = (results(1,:) >= cutoff);
