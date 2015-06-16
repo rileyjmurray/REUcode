@@ -7,8 +7,10 @@ function [DataCenter, dueDates] = ScheduleNextDataCenter(...
 %   tardiness, and the new dueDates
 
     switch upper(policy)
-        case {'EDD'}
+        case {'W-EDD'}
             [DataCenter, dueDates] = SchedByWEDD(T, D, W, numSvr);
+        case {'EDD'}
+            [DataCenter, dueDates] = SchedByEDD(T, D, numSvr);
         case {'LS'}
             [DataCenter, dueDates] = SchedByWLS(T, D, W, numSvr);
         case {'WLPT'}

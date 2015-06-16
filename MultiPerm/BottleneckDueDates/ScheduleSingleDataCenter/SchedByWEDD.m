@@ -1,3 +1,3 @@
-function [DataCenter, dueDates] = SchedByWEDD(T, W, numSvr)
+function [DataCenter, dueDates] = SchedByWEDD(T, D, W, numSvr)
     
 end
