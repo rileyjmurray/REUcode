@@ -32,7 +32,7 @@ public class COmKDiffPerms {
 	private double[][] z;
 	private ArrayList<Double[][]> r;
 	private double[] c;
-	private int[] ordering;
+	private int[][] ordering;
 
 	public static void main(String[] args) {
 		try {
@@ -125,7 +125,6 @@ public class COmKDiffPerms {
 		 * (5b) : start times for a job on a datacenter
 		 * (6) : transitivity in the job ordering
 		 * (7) : the completion time for a job must be less than or equal to the completion time of all tasks
-		 * (8) : all datacenters must have the same ordering
 		 */
 
 		/*
@@ -336,15 +335,19 @@ public class COmKDiffPerms {
 	}
 
 	public void findAndDisplayOrdering() {
-		ordering = new int[n];
-		for (int i1 = 0; i1 < n; i1++) {
-			int pos = 0;
-			for (int i2 = 0; i2 < n; i2++) {
-				if (y[0][i1][i2] == 1) {
-					pos = pos + 1;
+		ordering = new int[m][n];
+		for (int k = 0; k < m; k++) {
+			for (int i1 = 0; i1 < n; i1++) {
+				int pos = 0;
+				for (int i2 = 0; i2 < n; i2++) {
+					if (y[k][i1][i2] == 1) {
+						pos = pos + 1;
+					}
 				}
+				ordering[k][(n - 1) - pos] = (i1 + 1);
 			}
-			ordering[(n - 1) - pos] = (i1 + 1);
+			System.out.println();
+			System.out.println(Arrays.toString(ordering[k]));
 		}
 	}
 
@@ -356,7 +359,7 @@ public class COmKDiffPerms {
 				sb[l] = new StringBuilder();
 			}
 			for (int i = 0; i < n; i++) {
-				int currJob = ordering[i] - 1;
+				int currJob = ordering[k][i] - 1;
 				int jobServer = 0;
 				while (s.get(k)[currJob][jobServer].equals(0)) {
 					jobServer = jobServer + 1;
