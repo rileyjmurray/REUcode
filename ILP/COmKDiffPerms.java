@@ -37,9 +37,12 @@ public class COmKDiffPerms {
 	public static void main(String[] args) {
 		try {
 			PrintWriter output = new PrintWriter(new BufferedWriter(new FileWriter("output.txt")));
-			double[][] p = {{1,2},{3,1},{2,3},{1,1},{3,2}};
-			double[] w = {1,2,3,4,1};
-			int[] serversArg = {2,2};
+			double[][] p = {{25,10}, {1,1}, {1,1}, {1,1}, {1,1}, {1,1}, {1,1},
+				{1,1}, {1,1}, {1,1}, {1,1}, {1,1}, {1,1}, {1,1}, {1,1}, {1,1},
+				{1,1}, {1,1}, {1,1}, {1,1}};
+			double[] w = {50, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+							1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+			int[] serversArg = {2,1};
 			COmKDiffPerms instance = new COmKDiffPerms(p, w, serversArg);
 			instance.defineDecisionVariables();
 			instance.buildConstraints();
@@ -307,6 +310,9 @@ public class COmKDiffPerms {
 			int j = Integer.parseInt(st.nextToken())-1;
 			int i = Integer.parseInt(st.nextToken())-1;
 			z[j][i] = Z.get(k).get(GRB.DoubleAttr.X);
+			if (z[j][i] <= 0.0) {
+				z[j][i] = 0.0;
+			}
 		}
 
 		for (Integer k : C.keySet()) {
