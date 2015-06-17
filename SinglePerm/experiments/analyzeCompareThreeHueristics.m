@@ -1,7 +1,3 @@
-%%
-load('experiments/c3h1.mat');
-
-%%
 figure
 
 subplot(3,1,1);
