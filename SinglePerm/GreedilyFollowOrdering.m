@@ -44,8 +44,8 @@ function [DataCenters, jobCompletionTimes] = GreedilyFollowOrdering(K,P,C)
             nextSvr.nextFree = nextSvr.nextFree + P(nextJob, dc);
             nextSvr.toDo(end + 1) = nextJob;
             nextSvr.completionTimes(end + 1) = nextSvr.nextFree;
-            if (jobCompletionTimes(j) < nextSvr.completionTimes(end))
-                jobCompletionTimes(j) = nextSvr.completionTimes(end);
+            if (jobCompletionTimes(nextJob) < nextSvr.completionTimes(end))
+                jobCompletionTimes(nextJob) = nextSvr.completionTimes(end);
             end
         end  
     end 
