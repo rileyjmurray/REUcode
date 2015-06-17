@@ -17,7 +17,6 @@ for i = 1:numTrials
    
    P(:,:,i) = randi([0,maxT], numJ, numDC);
    K(i,:) = randi([1,maxK], 1, numDC);
-   % W = 10 * rand(numJ, 1); % randomized weights
    W = ones(numJ, 1); % unweighted
    
    [pPre1, mapping1] = preProcGeneric(P(:,:,i), K(i,:), W, 'makespan');
