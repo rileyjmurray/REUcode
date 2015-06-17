@@ -1,5 +1,5 @@
 %%
-load('PreProcData.mat'); % some preprocessing data (WEIGHTED)
+load('PreProcData.mat');
 sameSoln = 1;
 threshold = 0.005;
 % entries of results matrix come in form makespan/sum
