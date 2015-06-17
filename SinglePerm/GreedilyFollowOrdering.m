@@ -40,13 +40,12 @@ function [DataCenters, jobCompletionTimes] = GreedilyFollowOrdering(K,P,C)
             nextFrees = vertcat(DataCenters{dc}.nextFree);
             firstAvail = find(nextFrees == min(nextFrees),1);
             nextSvr = DataCenters{dc}(firstAvail);
-            idx = length(nextSvr.toDo) + 1;
             nextJob = C(j);
             nextSvr.nextFree = nextSvr.nextFree + P(nextJob, dc);
-            nextSvr.toDo(idx) = nextJob;
-            nextSvr.completionTimes(idx) = nextSvr.nextFree;
-            if (jobCompletionTimes(j) < nextSvr.completionTimes(idx))
-                jobCompletionTimes(j) = nextSvr.completionTimes(idx);
+            nextSvr.toDo(end + 1) = nextJob;
+            nextSvr.completionTimes(end + 1) = nextSvr.nextFree;
+            if (jobCompletionTimes(j) < nextSvr.completionTimes(end))
+                jobCompletionTimes(j) = nextSvr.completionTimes(end);
             end
         end  
     end 
