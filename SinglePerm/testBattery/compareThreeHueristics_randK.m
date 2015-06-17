@@ -2,11 +2,11 @@
 % each problem requires:
 %   P, K, W
 numJ = 10:20:100;
-numReplications = 50;
+numReplications = 10;
 maxT = 50;
-Kcst = 2:10;
+maxK = 2:10;
 numDC = 2:10;
-numTrials = length(numJ) * length(maxT) * length(Kcst) ...
+numTrials = length(numJ) * length(maxT) * length(maxK) ...
     * length(numDC) * numReplications;
 numVars = 3; % numJobs, Kcst, numDC
 %%
@@ -20,18 +20,18 @@ ProblemSpecs = zeros(numTrials, numVars);
 trial = 1;
 for jIdx = 1:length(numJ)
     for tIdx = 1:length(maxT)
-        for kIdx = 1:length(Kcst)
+        for kIdx = 1:length(maxK)
             for dIdx = 1:length(numDC)
                 for i = 1:numReplications
                     
    % Progress Report
    if (mod(trial, 100) == 0 || trial == numTrials)
    display([jIdx / length(numJ), tIdx / length(maxT), ...
-       kIdx / length(Kcst), dIdx / length(numDC)]);
+       kIdx / length(maxK), dIdx / length(numDC)]);
    end
                     
    % Generate Problem Data
-   K = Kcst(kIdx) * ones(1, numDC(dIdx));
+   K = randi([1, maxK(kIdx)], 1, numDC(dIdx));
    P = randi([0,maxT(tIdx)], numJ(jIdx), numDC(dIdx));
    W = ones(numJ(jIdx), 1);
    
@@ -39,7 +39,7 @@ for jIdx = 1:length(numJ)
    Kcollec{trial} = K;
    Pcollec{trial} = P;
    Wcollec{trial} = W;
-   ProblemSpecs(trial,:) = [numJ(jIdx), Kcst(kIdx), numDC(dIdx)];
+   ProblemSpecs(trial,:) = [numJ(jIdx), maxK(kIdx), numDC(dIdx)];
    
    % Solutions
    sigmaMod = ModifiedMonaldo(K, P, W);
