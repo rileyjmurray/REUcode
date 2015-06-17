@@ -33,8 +33,3 @@ for i = 1:numTrials
    
    results(i) = sum(compTimesPreMakespan) / sum(compTimesPreSum);
 end
-
-%%
-figure
-hist(results(:),100);
-title('Makespan / Sum');
