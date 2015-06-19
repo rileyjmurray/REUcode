@@ -1,0 +1,16 @@
+Schedule the first job first (as opposed to Monaldo variants, which
+schedule the first job last).
+
+Look at the DataCenter with the latest first-available-starting-time.
+
+That DataCenter is the "bottleneck" for this iteration.
+
+... now do what?
+
+mu = bottleneck
+
+ratio = w ./ P(:,mu);
+if (idx > 1)
+    ratio(scheduled == 1) = Inf;
+end
+sigma(k) = find((ratio == min(ratio)),1);

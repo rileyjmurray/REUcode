@@ -1,5 +1,9 @@
 %%
-load('PreProcData_experiment1.mat');
+
+% UNCOMMENT ONE OF THE TWO LINES BELOW
+%load('PreProcData_experiment1.mat'); --> makespan dominates (unweighted)
+%load('PreProcData_experiment2.mat'); --> sum dominates (weighted)
+
 sameSoln = 1;
 threshold = 0.005;
 % entries of results matrix come in form makespan/sum

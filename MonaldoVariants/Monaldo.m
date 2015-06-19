@@ -38,6 +38,11 @@ function sigma = Monaldo(P,W)
         if (idx > 1)
             ratio(scheduled == 1) = Inf;
         end
+        if (ratio == Inf)
+            display(strcat(...
+            'ERROR -- remaining unscheduled jobs have zero',...
+            ' processing time'));
+        end
         sigma(k) = find((ratio == min(ratio)),1);
         theta = w(sigma(k)) / P(sigma(k),mu);
         w(scheduled == 0) = w(scheduled == 0) ...

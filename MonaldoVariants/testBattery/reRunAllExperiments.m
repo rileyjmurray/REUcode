@@ -47,14 +47,24 @@ display(msg);
 run TestBatteryParamsPriorDeclared;
 save('experiment4.mat', 'Outputs', 'Inputs', 'kScalar', 'maxT', 'numDC',...
     'numJ', 'numPerms', 'numTrials', 'R');
-
+%%
 clear;
-load('PreProcData.mat');
+load('experiments/PreProcData_experiment1.mat');
 clear results;
 msg = 'Running pre-processing experiment 1';
 display(msg);
 run PreProcCompareParamsPriorDeclared_Unweighted;
-save('PreProcData_experiment1.mat', 'K', 'maxK', 'maxT', 'numDC',...
+save('experiments/PreProcData_experiment1.mat', 'K', 'maxK', 'maxT', 'numDC',...
+    'numJ', 'numTrials', 'P', 'results', 'W');
+%%
+clear;
+load('experiments/PreProcData_experiment2.mat');
+maxWt = 10;
+clear results;
+msg = 'Running pre-processing experiment 2';
+display(msg);
+run PreProcCompareParamsPriorDeclared_Weighted;
+save('experiments/PreProcData_experiment2.mat', 'K', 'maxK', 'maxT', 'numDC',...
     'numJ', 'numTrials', 'P', 'results', 'W');
 
 clear;

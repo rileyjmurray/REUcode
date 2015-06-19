@@ -3,12 +3,12 @@
 %   P, K, W
 numJ = 10:20:100;
 numReplications = 10;
-maxT = 50;
+maxT = 10:10:50;
 maxK = 5:10;
-numDC = 2:10;
-maxWt = 50;
+numDC = 1;
+maxWt = 10:10:50;
 numTrials = length(numJ) * length(maxT) * length(maxK) ...
-    * length(numDC) * numReplications;
+    * length(numDC) * length(maxWt) * numReplications;
 numVars = 3; % numJobs, Kcst, numDC
 %%
 
@@ -23,7 +23,8 @@ for jIdx = 1:length(numJ)
     for tIdx = 1:length(maxT)
         for kIdx = 1:length(maxK)
             for dIdx = 1:length(numDC)
-                for i = 1:numReplications
+                for wIdx = 1:length(maxWt)
+                    for i = 1:numReplications
                     
    % Progress Report
    if (mod(trial, 100) == 0 || trial == numTrials)
@@ -33,8 +34,8 @@ for jIdx = 1:length(numJ)
                     
    % Generate Problem Data
    K = randi([1, maxK(kIdx)], 1, numDC(dIdx));
-   P = randi([0,maxT(tIdx)], numJ(jIdx), numDC(dIdx));
-   W = maxWt * rand(numJ(jIdx), 1);
+   P = randi([1,maxT(tIdx)], numJ(jIdx), numDC(dIdx));
+   W = maxWt(wIdx) * rand(numJ(jIdx), 1);
    
    % Store Problem Data For Later
    Kcollec{trial} = K;
@@ -43,23 +44,27 @@ for jIdx = 1:length(numJ)
    ProblemSpecs(trial,:) = [numJ(jIdx), maxK(kIdx), numDC(dIdx)];
    
    % Solutions
-   sigmaMod = ModifiedMonaldo(K, P, W);
-   sigmaAwk = Monaldo(P, W);
-   [pPre, mapping] = preProcMinMakespan(P, K);
-   sigmaPre = Monaldo(pPre, W);
-   [DataCentersMod, compTimesMod] =...
-       GreedilyFollowOrdering(K, P, sigmaMod);
-   [DataCentersPre, compTimesPre] = ...
-       mapPreProcBack(sigmaPre, mapping, pPre);
-   [DataCentersAwk, compTimesAwk] = ...
-       GreedilyFollowOrdering(K, P, sigmaAwk);
+   [pMkspn, mappingMkspn] = preProcGeneric(P, K, W, 'makespan');
+   sigmaMkspn = Monaldo(pMkspn, W);
+   [DataCentersMkspn, compTimesMkspn] = ...
+       mapPreProcBack(sigmaMkspn, mappingMkspn, pMkspn);
+   
+   [pSum, mappingSum] = preProcGeneric(P, K, W, 'sum');
+   sigmaSum = Monaldo(pSum, W);
+   [DataCentersSum, compTimesSum] = ...
+       mapPreProcBack(sigmaSum, mappingSum, pSum);
+   
+   [~, jobsByWLPT] = sort(W ./ P, 'descend');
+   [DataCentersWLPT, compTimesWLPT] = GreedilyFollowOrdering(...
+       K, P, jobsByWLPT);
    
    % Record results
-   Outputs(1, trial) = W' * compTimesMod';
-   Outputs(2, trial) = W' * compTimesPre';
-   Outputs(3, trial) = W' * compTimesAwk';
+   Outputs(1, trial) = W' * compTimesMkspn';
+   Outputs(2, trial) = W' * compTimesSum';
+   Outputs(3, trial) = W' * compTimesWLPT';
    
    trial = trial + 1;
+                    end
                 end
             end
         end

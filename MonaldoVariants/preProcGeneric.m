@@ -40,19 +40,16 @@ function [Pmapped, mapping] = preProcGeneric(P, K, W, type)
     
     if (strcmp(type,'makespan'))
         sortType = 'descend';
-        weightsSort = 0;
     elseif (strcmp(type,'sum'))
-        sortType = 'ascend';
-        weightsSort = 1;
+        sortType = 'descend';
     end
-    
     
     currPsuedoDC = 1;
     for dc = 1:numDC
-        if (~weightsSort)
+        if (strcmp('makespan',type))
             [~, dcIdx] = sort(P(:,dc), sortType);
         else
-            [~, dcIdx] = sort(P(:,dc) .* W, sortType);
+            [~, dcIdx] = sort(W ./ P(:,dc), sortType);
         end
         psuedoDataCenterCompletionTimes = zeros(1,K(dc));
         mapping{dc} = currPsuedoDC:(currPsuedoDC + (K(dc) - 1));
