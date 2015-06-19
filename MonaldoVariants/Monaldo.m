@@ -26,12 +26,17 @@ function sigma = Monaldo(P,W)
     end
     
     n = size(P,1);
+    m = size(P,2);
     sigma = zeros(1,n);
     scheduled = zeros(n,1);
+    pureZeros = find(ismember(P, zeros(1,m), 'rows'));
+    for i = 1:length(pureZeros)
+       sigma(i) = pureZeros(i); 
+    end
     
     L = sum(P,1);
     w = W;
-    for idx = 1:n
+    for idx = 1:(n - length(pureZeros))
         k = n - idx + 1;
         mu = find((L == max(L)),1);
         ratio = w ./ P(:,mu);
@@ -42,6 +47,7 @@ function sigma = Monaldo(P,W)
             display(strcat(...
             'ERROR -- remaining unscheduled jobs have zero',...
             ' processing time'));
+            return;
         end
         sigma(k) = find((ratio == min(ratio)),1);
         theta = w(sigma(k)) / P(sigma(k),mu);
