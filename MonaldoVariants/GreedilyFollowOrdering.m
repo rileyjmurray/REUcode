@@ -41,11 +41,15 @@ function [DataCenters, jobCompletionTimes] = GreedilyFollowOrdering(K,P,C)
             firstAvail = find(nextFrees == min(nextFrees),1);
             nextSvr = DataCenters{dc}(firstAvail);
             nextJob = C(j);
-            nextSvr.nextFree = nextSvr.nextFree + P(nextJob, dc);
-            nextSvr.toDo(end + 1) = nextJob;
-            nextSvr.completionTimes(end + 1) = nextSvr.nextFree;
-            if (jobCompletionTimes(nextJob) < nextSvr.completionTimes(end))
-                jobCompletionTimes(nextJob) = nextSvr.completionTimes(end);
+            % appending tasks of zero duration could be skewing the 
+            %   results
+            if (P(nextJob, dc) > 0)
+                nextSvr.nextFree = nextSvr.nextFree + P(nextJob, dc);
+                nextSvr.toDo(end + 1) = nextJob;
+                nextSvr.completionTimes(end + 1) = nextSvr.nextFree;
+                if (jobCompletionTimes(nextJob) < nextSvr.completionTimes(end))
+                    jobCompletionTimes(nextJob) = nextSvr.completionTimes(end);
+                end
             end
         end  
     end 
