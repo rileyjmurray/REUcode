@@ -1,4 +1,4 @@
-function [DataCenters, jobCompletionTimes] = ScheduleWithReordering(K,P,C)
+function [DataCenters, jobCompletionTimes] = ScheduleWithReshuffling(K,P,C)
     
     % problem: CPm | K | \sum_{j} C_j
 
