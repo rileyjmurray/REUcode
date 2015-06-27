@@ -30,22 +30,21 @@ function sigma = ModifiedMonaldo(K,P,W)
     n = size(P,1);
     sigma = zeros(1,n);
     scheduled = zeros(n,1);
+    ratio = zeros(2,n);
+    ratio(2,:) = 1:n;
     
     L = sum(P,1) ./ K;
     w = W;
     for idx = 1:n
         k = n - idx + 1;
         mu = find((L == max(L)),1);
-        ratio = w ./ P(:,mu);
-        if (idx > 1)
-            ratio(scheduled == 1) = Inf; 
-        end
-        if (ratio == Inf)
-            display(strcat(...
-            'ERROR -- remaining unscheduled jobs have zero',...
-            ' processing time'));
-        end
-        sigma(k) = find((ratio == min(ratio)),1);
+        ratio(1,:) = w ./ P(:,mu);
+
+        [~, c] = find(...
+            ratio(1,scheduled == 0) == min(ratio(1,scheduled == 0)),1);
+        temp = ratio(:,scheduled == 0);
+        sigma(k) = temp(2,c);
+        
         theta = w(sigma(k)) / P(sigma(k),mu);
         w(scheduled == 0) = w(scheduled == 0) ...
             - theta * P(scheduled == 0, mu);

@@ -54,19 +54,32 @@ clear results;
 msg = 'Running pre-processing experiment 1';
 display(msg);
 run PreProcCompareParamsPriorDeclared_Unweighted;
-save('experiments/PreProcData_experiment1.mat', 'K', 'maxK', 'maxT', 'numDC',...
+save('MonaldoVariants/experiments/PreProcData_experiment1.mat', 'K', 'maxK', 'maxT', 'numDC',...
     'numJ', 'numTrials', 'P', 'results', 'W');
-%%
+
 clear;
-load('experiments/PreProcData_experiment2.mat');
+load('MonaldoVariants/experiments/PreProcData_experiment2.mat');
 maxWt = 10;
 clear results;
 msg = 'Running pre-processing experiment 2';
 display(msg);
 run PreProcCompareParamsPriorDeclared_Weighted;
-save('experiments/PreProcData_experiment2.mat', 'K', 'maxK', 'maxT', 'numDC',...
+save('MonaldoVariants/experiments/PreProcData_experiment2.mat', 'K', 'maxK', 'maxT', 'numDC',...
     'numJ', 'numTrials', 'P', 'results', 'W');
 
+%%
+clear;
+load('MonaldoVariants/experiments/compareThreeHueristics_experiment1.mat');
+clear Outputs;
+msg = 'Running compare three hueristics (rand K, rand W) experiment 1';
+display(msg);
+run compareThreeHueristics_randK_randW_ParamsPriorDeclared;
+save('MonaldoVariants/experiments/compareThreeHueristics_experiment1.mat',...
+    'Kcollec', 'maxK', 'maxWt','numDC', 'numJ', 'numReplications',...
+    'numTrials', 'numVars', 'Outputs', 'Pcollec', 'ProblemSpecs',...
+    'Wcollec', 'maxT');
+
+%%
 clear;
 load('exhaust_experiment2.mat');
 clear Outputs;

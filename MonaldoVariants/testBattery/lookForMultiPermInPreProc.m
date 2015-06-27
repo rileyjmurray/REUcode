@@ -13,9 +13,9 @@ numVars = 3; % numJobs, Kcst, numDC
 Pcollec = cell(numTrials, 1);
 Kcollec = cell(numTrials, 1);
 Wcollec = cell(numTrials, 1);
-DCcollec = cell(numTrials, 1);
+DCcollec = cell(numTrials, 2);
 ProblemSpecs = zeros(numTrials, numVars);
-singlePerm = zeros(1, numTrials); 
+singlePerm = zeros(numTrials, 2); 
 % ^ entry is one if there is a valid single permutation interpretation
 
 %%
@@ -45,13 +45,23 @@ for jIdx = 1:length(numJ)
    ProblemSpecs(trial,:) = [numJ(jIdx), maxK(kIdx), numDC(dIdx)];
    
    % Solutions
-   [pPre, mapping] = preProcMinMakespan(P, K);
-   sigmaPre = Monaldo(pPre, W);
-   [DataCentersPre, compTimesPre] = ...
-       mapPreProcBack(sigmaPre, mapping, pPre);
-   DCcollec{trial} = DataCentersPre;
    
-   singlePerm(trial) = determineIfSinglePerm(DataCentersPre, P);
+   % Makespan Pre-Processing
+   [pMakespan, mappingMakespan] = preProcGeneric(P, K, W, 'makespan');  
+   sigmaMakespan = Monaldo(pMakespan, W);
+   [DataCentersMakespan, compTimesMakespan] = ...
+       mapPreProcBack(sigmaMakespan, mappingMakespan, pMakespan);
+   DCcollec{trial, 1} = DataCentersMakespan;
+   
+   % Weighted Sum Pre-Processing
+   [pSum, mappingSum] = preProcGeneric(P, K, W, 'sum');
+   sigmaSum = Monaldo(pSum, W);
+   [DataCentersSum, compTimesSum] = ...
+       mapPreProcBack(sigmaSum, mappingSum, pSum);
+   DCcollec{trial, 2} = DataCentersSum;
+   
+   singlePerm(trial, 1) = determineIfSinglePerm(DataCentersMakespan, P);
+   singlePerm(trial, 2) = determineIfSinglePerm(DataCentersSum, P);
    
    trial = trial + 1;
                 end

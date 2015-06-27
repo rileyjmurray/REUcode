@@ -1,22 +1,5 @@
 
-% each problem requires:
-%   P, K, W
-numJ = 20:20:100;
-numReplications = 10;
-maxT = 50;
-maxK = 5:10;
-numDC = 2:10;
-maxWt = 50;
-numTrials = length(numJ) * length(maxT) * length(maxK) ...
-    * length(numDC) * numReplications;
-numVars = 3; % numJobs, Kcst, numDC
-%%
-
 Outputs = zeros(3,numTrials);
-Pcollec = cell(numTrials, 1);
-Kcollec = cell(numTrials, 1);
-Wcollec = cell(numTrials, 1);
-ProblemSpecs = zeros(numTrials, numVars);
 
 trial = 1;
 for jIdx = 1:length(numJ)
@@ -32,16 +15,10 @@ for jIdx = 1:length(numJ)
    end
                     
    % Generate Problem Data
-   K = randi([1, maxK(kIdx)], 1, numDC(dIdx));
-   P = randi([0,maxT(tIdx)], numJ(jIdx), numDC(dIdx));
+   K = Kcollec{trial};
+   P = Pcollec{trial};
    n = size(P,1);
-   W = maxWt * rand(numJ(jIdx), 1);
-   
-   % Store Problem Data For Later
-   Kcollec{trial} = K;
-   Pcollec{trial} = P;
-   Wcollec{trial} = W;
-   ProblemSpecs(trial,:) = [numJ(jIdx), maxK(kIdx), numDC(dIdx)];
+   W = Wcollec{trial};
    
    % Modified Monaldo
    sigmaMod = ModifiedMonaldo(K, P, W);
