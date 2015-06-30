@@ -1,4 +1,6 @@
 
+import java.util.Arrays;
+
 public class COmKInstance {
 
 	// Problem input
@@ -56,6 +58,26 @@ public class COmKInstance {
 			}
 			// record the objective value
 			objVal = objVal + w[job] * latest;
+		}
+		isSolved = true;
+	}
+
+	public void multiListSchedule(int[][] multiSigma) {
+		// multiSigma[dc] is the permutation of {1,...,n} for DataCenter "dc"
+		double[] latest = new double[n];
+		for (int dc = 0; dc < m; dc++) {
+			for (int j = 0; j < n; j++) {
+				int job = multiSigma[dc][j];
+				if (p[job][dc] > 0) {
+					double localTime = dcs[dc].scheduleJobOnMinServer(job, p[job][dc]);
+					if (localTime > latest[job]) {
+						latest[job] = localTime;
+					}
+				}
+			}
+		}
+		for (int j = 0; j < n; j++) {
+			objVal = objVal + w[j] * latest[j];
 		}
 		isSolved = true;
 	}

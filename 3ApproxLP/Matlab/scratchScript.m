@@ -1,0 +1,67 @@
+% double[][] testP = {{3,4,6},{8,6,3},{6,3,7},{0,7,5},{2,5,8},{8,6,4},{1,1,5},{8,4,2}};
+% 		int[] testServers = {2,1,1};
+% 		double[] testWeights = {1,2,3,1,2,3,1,2};
+
+P = [3,4,6; 8,6,3; 6,3,7; 0,7,5; 2,5,8; 8,6,4; 1,1,5; 8,4,2];
+K = [2,1,1];
+W = [1,2,3,1,2,3,1,2]';
+
+sigma = ParallelAwareMonaldo(K, P, W);
+[~, compTimes] = GreedilyFollowOrdering(K, P, sigma);
+obj = W' * compTimes';
+
+%% determine if missing a constraint
+
+% violation = All2NMinus1ConstraintsSatisfied(P, K, compTimes)
+% need: P, K, compTimes
+
+P = Pcollec{bad(1)};
+K = Kcollec{bad(1)};
+W = Wcollec{bad(1)};
+
+% compTimes is from the LP. "CT"
+violations = All2NMinus1ConstraintsSatisfied(P,K,CT);
+% [47.73913043478261, 47.73913043478261]
+% [8.0, 8.0]
+% [83.0, 83.0]
+% [5112.291666666667, 1124.2694099378882]
+% [42.0, 42.0]
+% [49.0, 49.0]
+% [23.0, 23.0]
+% [48.0, 48.0]
+% [18.0, 18.0]
+% [46.0, 46.0]
+% [39.0, 39.0]
+% [10.0, 10.0]
+% [42.0, 42.0]
+% [45.0, 45.0]
+% [41.0, 41.0]
+% [37.0, 37.0]
+% [1836.1707317073171, 376.92307692307685]
+% [46.0, 46.0]
+% [28.0, 28.0]
+% [42.0, 2.0]
+
+%%
+figure;
+subplot(2,1,1);
+stem(violations(1,:));
+subplot(2,1,2);
+stem(violations(2,:));
+
+%%
+figure
+subplot(3,1,1);
+stem(ObjectiveOutputs(1,lpFinished) ./ lowerBound(lpFinished));
+title('Parallel Aware Monaldo Optimality Gap');
+ylim([1,1.3]);
+
+subplot(3,1,2);
+stem(ObjectiveOutputs(2, lpFinished) ./ lowerBound(lpFinished));
+title('3-Approx LP Optimality Gap');
+ylim([1,1.3]);
+
+subplot(3,1,3);
+stem(ObjectiveOutputs(2, lpFinished) ./ ObjectiveOutputs(1, lpFinished));
+title('3-Approx / Parallel Aware Monaldo');
+ylim([0.95,1.1]);

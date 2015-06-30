@@ -6,8 +6,9 @@ import java.util.Arrays;
 
 public class ThreeApproxLPSimplex {
 
-	public static final long TIME_LIMIT = 50000;
+	public static final long TIME_LIMIT = 30000;
 	public static final double INIT_VIO = 0.0;
+	public static final double EPSILON = (1.0 / 10000.0);
 
 	// internal
 	private COmKInstance problem;
@@ -15,7 +16,9 @@ public class ThreeApproxLPSimplex {
 	private GRBModel model;
 	// outputs
 	private int[] sigma;
+	private int[][] multiSigma;
 	private double lpObjective;
+	private double[][] compTimes;
 
 	public ThreeApproxLPSimplex(COmKInstance c, String initPolicy) {
 		problem = c;
@@ -23,7 +26,7 @@ public class ThreeApproxLPSimplex {
 			env = new GRBEnv("ThreeApproxLPSimplex.log");
 			model = new GRBModel(env);
 			model.getEnv().set(GRB.IntParam.LogToConsole, 0); // do not print to console
-			//model.getEnv().set(GRB.IntParam.DisplayInterval, 300); // 5 minute logging
+			model.getEnv().set(GRB.IntParam.DisplayInterval, 300); // 5 minute logging
 			model.getEnv().set(GRB.IntParam.Threads, 4); // use 4 cores
 			defineDecisionVariables();
 			initializeConstraints(initPolicy);
@@ -33,8 +36,11 @@ public class ThreeApproxLPSimplex {
 	}
 
 	private void defineDecisionVariables() throws GRBException {
-		for (int i = 0; i < problem.n; i++) {
-			model.addVar(0.0, Integer.MAX_VALUE, problem.w[i], GRB.CONTINUOUS, "C_" + i);
+		for (int j = 0; j < problem.n; j++) {
+			model.addVar(0.0, Integer.MAX_VALUE, problem.w[j], GRB.CONTINUOUS, "C_" + j);
+			for (int i = 0; i < problem.m; i++) {
+				model.addVar(0.0, Integer.MAX_VALUE, 0.0, GRB.CONTINUOUS, "C_" + i + "," + j);
+			}
 		}
 		model.update();
 	}
@@ -60,7 +66,8 @@ public class ThreeApproxLPSimplex {
 		// sanity constraints
 		for (int dc = 0; dc < problem.m; dc++) {
 			for (int i = 0; i < problem.n; i++) {
-				model.addConstr(model.getVarByName("C_" + i), GRB.GREATER_EQUAL, problem.p[i][dc], "");
+				model.addConstr(model.getVarByName("C_" + dc + "," + i), GRB.GREATER_EQUAL, problem.p[i][dc], "");
+				model.addConstr(model.getVarByName("C_" + i), GRB.GREATER_EQUAL, model.getVarByName("C_" + dc + "," + i), "");
 			}
 		}
 		model.update();
@@ -70,8 +77,16 @@ public class ThreeApproxLPSimplex {
 		return sigma;
 	}
 
+	public int[][] getMultiSigma() {
+		return multiSigma;
+	}
+
 	public double getLPObjective() {
 		return lpObjective;
+	}
+
+	public double[] getCompTimesForJob(int i) {
+		return compTimes[i];
 	}
 
 	public void solve() throws GRBException {
@@ -84,12 +99,16 @@ public class ThreeApproxLPSimplex {
 			elapsedTime = System.currentTimeMillis() - startTime;
 		}
 		if (elapsedTime < TIME_LIMIT) {
-			constructSigma();
-			problem.listSchedule(sigma);
+			constructMultiSigma();
+			constructCompTimes();
+			problem.multiListSchedule(multiSigma);
 			lpObjective = model.get(GRB.DoubleAttr.ObjVal);
 		} else {
 			problem.setObjVal(-1);
+			lpObjective = -1;
 		}
+		model.dispose();
+		env.dispose();
 	}
 
 	public void constructSigma() throws GRBException {
@@ -104,6 +123,30 @@ public class ThreeApproxLPSimplex {
 		}
 	}
 
+	public void constructMultiSigma() throws GRBException {
+		multiSigma = new int[problem.m][problem.n];
+		for (int dc = 0; dc < problem.m; dc++) {
+			Twople[] toSort = new Twople[problem.n];
+			for (int i = 0; i < problem.n; i++) {
+				toSort[i] = new Twople(model.getVarByName("C_" + dc + "," + i).get(GRB.DoubleAttr.X), i);
+			}
+			Arrays.sort(toSort);
+			multiSigma[dc] = new int[problem.n];
+			for (int i = 0; i < problem.n; i++) {
+				multiSigma[dc][i] = toSort[i].toGetMeSorted;
+			}
+		}
+	}
+
+	public void constructCompTimes() throws GRBException {
+		compTimes = new double[problem.n][problem.m];
+		for (int i = 0; i < problem.m; i++) {
+			for (int j = 0; j < problem.n; j++) {
+				compTimes[j][i] = model.getVarByName("C_" + i + "," + j).get(GRB.DoubleAttr.X);
+			}
+		}
+	}
+
 	/*
 	*  returns "true" if an unlisted constraint was violated. Also adds one or more constraints to the model
 	*	For now, adds MOST violated constraints to the model for each DataCenter
@@ -111,17 +154,19 @@ public class ThreeApproxLPSimplex {
 	*/
 	private boolean infeasible() throws GRBException {
 		boolean result = false;
-		double[] values = new double[problem.n];
-		for (int j = 0; j < problem.n; j++) {
-			values[j] = model.getVarByName("C_" + j).get(GRB.DoubleAttr.X);
+		double[][] values = new double[problem.m][problem.n];
+		for (int i = 0; i < problem.m; i++) {
+			for (int j = 0; j < problem.n; j++) {
+				values[i][j] = model.getVarByName("C_" + i + "," + j).get(GRB.DoubleAttr.X);
+			}
 		}
 		for (int i = 0; i < problem.m; i++) {
-			int[] order = computeOrderByMetric(i, values);
+			int[] order = computeOrderByMetric(i, values[i]);
 			// order must be defined at this point...
 			double extremeV = INIT_VIO;
 			int extremeT = -1;
 			for (int t = 0; t < problem.n; t++) {
-				double v = calculateViolation(order, t, i, values);
+				double v = calculateViolation(order, t, i, values[i]);
 				if (v > extremeV) {
 					extremeV = v;
 					extremeT = t;
@@ -135,11 +180,11 @@ public class ThreeApproxLPSimplex {
 		return result;
 	}
 
-	private int[] computeOrderByMetric(int dc, double[] compTimes) {
+	private int[] computeOrderByMetric(int dc, double[] ct) {
 		double[] metric = new double[problem.n];
 		Twople[] toSort = new Twople[problem.n];
 		for (int j = 0; j < problem.n; j++) {
-			metric[j] = compTimes[j]- 0.5 * problem.p[j][dc];
+			metric[j] = ct[j] - 0.5 * problem.p[j][dc];
 			toSort[j] = new Twople(metric[j], j);
 		}
 		// sort jobs in increasing order of metric established above (to define order)
@@ -159,9 +204,10 @@ public class ThreeApproxLPSimplex {
 		GRBLinExpr lhs = new GRBLinExpr();
 
 		for (int i = 0; i <= t; i++) {
-			sum = sum + problem.p[i][dc];
-			sumOfSquares = sumOfSquares + problem.p[i][dc] * problem.p[i][dc];
-			lhs.addTerm(problem.p[i][dc], model.getVarByName("C_" + i));
+			int job = order[i];
+			sum = sum + problem.p[job][dc];
+			sumOfSquares = sumOfSquares + problem.p[job][dc] * problem.p[job][dc];
+			lhs.addTerm(problem.p[job][dc], model.getVarByName("C_" + dc + "," + job));
 		}
 		double discount = (1 / (double) problem.dcs[dc].servers.size());
 		rhs = 0.5 * (sumOfSquares +  discount * sum * sum);
@@ -169,24 +215,25 @@ public class ThreeApproxLPSimplex {
 		model.update();
 	}
 
-	private double calculateViolation(int order[], int t, int dc, double[] compTimes) throws GRBException {
+	private double calculateViolation(int order[], int t, int dc, double[] ct) throws GRBException {
 		// return violation of sum-of-squares constraint for J = {0,1,...,t}
 		double sumOfSquaresRHS = 0.0;
 		double sumRHS = 0.0;
 		double sumLHS = 0.0;
 		for (int i = 0; i <= t; i++) {
-			sumRHS = sumRHS + problem.p[i][dc];
-			sumOfSquaresRHS = sumOfSquaresRHS + problem.p[i][dc] * problem.p[i][dc];
-			sumLHS = sumLHS + problem.p[i][dc] * compTimes[i];
+			int job = order[i];
+			sumRHS = sumRHS + problem.p[job][dc];
+			sumOfSquaresRHS = sumOfSquaresRHS + problem.p[job][dc] * problem.p[job][dc];
+			sumLHS = sumLHS + problem.p[job][dc] * ct[job];
 		}
 		double discount = (1 / (double) problem.dcs[dc].servers.size());
 		double rhs = 0.5 * (sumOfSquaresRHS +  discount * sumRHS * sumRHS);
 		return (rhs - sumLHS);
 	}
 
-	public class Twople implements Comparable {
-		private double sortByMe;
-		private int toGetMeSorted;
+	public static class Twople implements Comparable {
+		public double sortByMe;
+		public int toGetMeSorted;
 		public Twople(double sbm, int tgms) {
 			sortByMe = sbm;
 			toGetMeSorted = tgms;
