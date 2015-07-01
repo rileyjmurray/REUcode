@@ -65,3 +65,70 @@ subplot(3,1,3);
 stem(ObjectiveOutputs(2, lpFinished) ./ ObjectiveOutputs(1, lpFinished));
 title('3-Approx / Parallel Aware Monaldo');
 ylim([0.95,1.1]);
+
+%%
+
+% from "compareThreeHueristics_randK_randW.m"
+%  Outputs(1, trial) = W' * compTimesTrans';
+%  Outputs(2, trial) = W' * compTimesSum';
+
+figure
+low = 0.9;
+high = 1.05;
+v = unique(ProblemSpecs(:,1));
+
+
+subplot(5,1,1);
+set = find(ProblemSpecs(:,1) == v(1));
+hist(Outputs(1,set) ./ Outputs(2,set),200);
+title(strcat('Trans / Sum --- when n = ',num2str(v(1))));
+xlim([low, high]);
+[mean(Outputs(1,set) ./ Outputs(2,set)),
+    max(Outputs(1,set) ./ Outputs(2,set))]
+
+subplot(5,1,2);
+set = find(ProblemSpecs(:,1) == v(2));
+hist(Outputs(1,set) ./ Outputs(2,set),200);
+title(strcat('Trans / Sum --- when n = ',num2str(v(2))));
+xlim([low, high]);
+[mean(Outputs(1,set) ./ Outputs(2,set)),
+    max(Outputs(1,set) ./ Outputs(2,set))]
+
+subplot(5,1,3);
+set = find(ProblemSpecs(:,1) == v(3));
+hist(Outputs(1,set) ./ Outputs(2,set),200);
+title(strcat('Trans / Sum --- when n = ',num2str(v(3))));
+xlim([low, high]);
+[mean(Outputs(1,set) ./ Outputs(2,set)),
+    max(Outputs(1,set) ./ Outputs(2,set))]
+
+subplot(5,1,4);
+set = find(ProblemSpecs(:,1) == v(4));
+hist(Outputs(1,set) ./ Outputs(2,set),200);
+title(strcat('Trans / Sum --- when n = ',num2str(v(4))));
+xlim([low, high]);
+[mean(Outputs(1,set) ./ Outputs(2,set)),
+    max(Outputs(1,set) ./ Outputs(2,set))]
+
+subplot(5,1,5);
+set = find(ProblemSpecs(:,1) == v(5));
+hist(Outputs(1,set) ./ Outputs(2,set),200);
+title(strcat('Trans / Sum --- when n = ',num2str(v(5))));
+xlim([low, high]);
+[mean(Outputs(1,set) ./ Outputs(2,set)),
+    max(Outputs(1,set) ./ Outputs(2,set))]
+
+%%
+figure
+low = 0.9;
+high = 1.05;
+v = unique(ProblemSpecs(:,1));
+
+
+subplot(5,1,1);
+set = find(ProblemSpecs(:,1) == v(1));
+hist(Outputs(1,set) ./ Outputs(2,set),200);
+title(strcat('Trans / Sum --- when n = ',num2str(v(1))));
+xlim([low, high]);
+[mean(Outputs(1,set) ./ Outputs(2,set)),
+    max(Outputs(1,set) ./ Outputs(2,set))]
