@@ -53,7 +53,7 @@ public class RunThreeApprox {
 		   25.3520,
 		   31.4506};
 		COmKInstance instance = new COmKInstance(testP, testServers, testWeights);
-		ThreeApproxLPSimplex lp = new ThreeApproxLPSimplex(instance, "none", "multi-permutation");
+		ThreeApproxLPSimplex lp = new ThreeApproxLPSimplex(instance, "none", "single-permutation");
 		lp.solve();
 
 		boolean valid = (lp.formulation.equals("single-permutation") || lp.formulation.equals("multi-permutation"));
@@ -68,9 +68,20 @@ public class RunThreeApprox {
 			System.out.println("Worst-Case Optimality Gap");
 			System.out.println(instance.getObjVal() / lp.getLPObjective());
 			System.out.println();
+
+			COmKInstance instance2 = new COmKInstance(testP, testServers, testWeights);
+			System.out.println();
+			System.out.println("4-Approximation Results");
+			instance2.transformThenMonaldo();
+			System.out.println();
+			System.out.println("Objective function");
+			System.out.println(instance2.getObjVal());
+			System.out.println("Worst-Case Optimality Gap");
+			System.out.println(instance2.getObjVal() / lp.getLPObjective());
+			System.out.println();
 		} else {
 			System.out.println("INVALID FORMULATION");
-		}
+		}	
 	}
 
 }
