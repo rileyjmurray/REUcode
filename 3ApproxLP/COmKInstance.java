@@ -5,6 +5,7 @@ public class COmKInstance {
 
 	// Problem input
 	public double[][] p;
+	public double[] maxP;
 	public DataCenter[] dcs;
 	public int n;
 	public int m;
@@ -18,7 +19,17 @@ public class COmKInstance {
 		p = inP;
 		n = p.length;
 		m = p[1].length;
-		dcs = new DataCenter[m];
+		maxP = new double[n];
+		for (int j = 0; j < n; j++) {
+			double currMax = p[j][0];
+			for (int i = 1; i < m; i++) {
+				if (currMax < p[j][i]) {
+					currMax = p[j][i];
+				}
+			}
+			maxP[j] = currMax;
+		}
+ 		dcs = new DataCenter[m];
 		w = inW;
 		isSolved = false;
 		for (int i = 0; i < m; i++) {

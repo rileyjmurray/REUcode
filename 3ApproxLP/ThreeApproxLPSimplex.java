@@ -9,11 +9,13 @@ public class ThreeApproxLPSimplex {
 	public static final long TIME_LIMIT = 30000;
 	public static final double INIT_VIO = 0.0;
 	public static final double EPSILON = (1.0 / 10000.0);
+	public static final String DEFAULT_FORMULATION = "single-permutation";
 
 	// internal
 	private COmKInstance problem;
 	private GRBEnv env;
 	private GRBModel model;
+	public String formulation;
 	// outputs
 	private int[] sigma;
 	private int[][] multiSigma;
@@ -23,6 +25,23 @@ public class ThreeApproxLPSimplex {
 	public ThreeApproxLPSimplex(COmKInstance c, String initPolicy) {
 		problem = c;
 		try {
+			formulation = DEFAULT_FORMULATION;
+			env = new GRBEnv("ThreeApproxLPSimplex.log");
+			model = new GRBModel(env);
+			model.getEnv().set(GRB.IntParam.LogToConsole, 0); // do not print to console
+			model.getEnv().set(GRB.IntParam.DisplayInterval, 300); // 5 minute logging
+			model.getEnv().set(GRB.IntParam.Threads, 4); // use 4 cores
+			defineDecisionVariables();
+			initializeConstraints(initPolicy);
+		} catch (GRBException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public ThreeApproxLPSimplex(COmKInstance c, String initPolicy, String form) {
+		problem = c;
+		try {
+			formulation = form;
 			env = new GRBEnv("ThreeApproxLPSimplex.log");
 			model = new GRBModel(env);
 			model.getEnv().set(GRB.IntParam.LogToConsole, 0); // do not print to console
@@ -36,10 +55,16 @@ public class ThreeApproxLPSimplex {
 	}
 
 	private void defineDecisionVariables() throws GRBException {
-		for (int j = 0; j < problem.n; j++) {
-			model.addVar(0.0, Integer.MAX_VALUE, problem.w[j], GRB.CONTINUOUS, "C_" + j);
-			for (int i = 0; i < problem.m; i++) {
-				model.addVar(0.0, Integer.MAX_VALUE, 0.0, GRB.CONTINUOUS, "C_" + i + "," + j);
+		if (formulation.equals("single-permutation")) {
+			for (int j = 0; j < problem.n; j++) {
+				model.addVar(0.0, Integer.MAX_VALUE, problem.w[j], GRB.CONTINUOUS, "C_" + j);
+			}
+		} else {
+			for (int j = 0; j < problem.n; j++) {
+				model.addVar(0.0, Integer.MAX_VALUE, problem.w[j], GRB.CONTINUOUS, "C_" + j);
+				for (int i = 0; i < problem.m; i++) {
+					model.addVar(0.0, Integer.MAX_VALUE, 0.0, GRB.CONTINUOUS, "C_" + i + "," + j);
+				}
 			}
 		}
 		model.update();
@@ -63,11 +88,20 @@ public class ThreeApproxLPSimplex {
 		} else {
 			throw new IllegalArgumentException();
 		}
+
 		// sanity constraints
-		for (int dc = 0; dc < problem.m; dc++) {
-			for (int i = 0; i < problem.n; i++) {
-				model.addConstr(model.getVarByName("C_" + dc + "," + i), GRB.GREATER_EQUAL, problem.p[i][dc], "");
-				model.addConstr(model.getVarByName("C_" + i), GRB.GREATER_EQUAL, model.getVarByName("C_" + dc + "," + i), "");
+		if (formulation.equals("single-permutation")) {
+			for (int dc = 0; dc < problem.m; dc++) {
+				for (int i = 0; i < problem.n; i++) {
+					model.addConstr(model.getVarByName("C_" + i), GRB.GREATER_EQUAL, problem.maxP[i], "");
+				}
+			}
+		} else {
+			for (int dc = 0; dc < problem.m; dc++) {
+				for (int i = 0; i < problem.n; i++) {
+					model.addConstr(model.getVarByName("C_" + dc + "," + i), GRB.GREATER_EQUAL, problem.p[i][dc], "");
+					model.addConstr(model.getVarByName("C_" + i), GRB.GREATER_EQUAL, model.getVarByName("C_" + dc + "," + i), "");
+				}
 			}
 		}
 		model.update();
@@ -99,9 +133,17 @@ public class ThreeApproxLPSimplex {
 			elapsedTime = System.currentTimeMillis() - startTime;
 		}
 		if (elapsedTime < TIME_LIMIT) {
-			constructMultiSigma();
+			if (formulation.equals("single-permutation")) {
+				constructSigma();
+			} else {
+				constructMultiSigma();
+			}
 			constructCompTimes();
-			problem.multiListSchedule(multiSigma);
+			if (formulation.equals("single-permutation")) {
+				problem.listSchedule(sigma);
+			} else {
+				problem.multiListSchedule(multiSigma);
+			}
 			lpObjective = model.get(GRB.DoubleAttr.ObjVal);
 		} else {
 			problem.setObjVal(-1);
@@ -140,9 +182,16 @@ public class ThreeApproxLPSimplex {
 
 	public void constructCompTimes() throws GRBException {
 		compTimes = new double[problem.n][problem.m];
-		for (int i = 0; i < problem.m; i++) {
-			for (int j = 0; j < problem.n; j++) {
-				compTimes[j][i] = model.getVarByName("C_" + i + "," + j).get(GRB.DoubleAttr.X);
+		for (int j = 0; j < problem.n; j++) {
+			if (formulation.equals("single-permutation")) {
+				double jobTime = model.getVarByName("C_" + j).get(GRB.DoubleAttr.X);
+				for (int i = 0; i < problem.m; i++) {
+					compTimes[j][i] = jobTime;
+				}
+			} else {
+				for (int i = 0; i < problem.m; i++) {
+					compTimes[j][i] = model.getVarByName("C_" + i + "," + j).get(GRB.DoubleAttr.X);
+				}
 			}
 		}
 	}
@@ -155,11 +204,22 @@ public class ThreeApproxLPSimplex {
 	private boolean infeasible() throws GRBException {
 		boolean result = false;
 		double[][] values = new double[problem.m][problem.n];
-		for (int i = 0; i < problem.m; i++) {
+
+		if (formulation.equals("single-permutation")) {
 			for (int j = 0; j < problem.n; j++) {
-				values[i][j] = model.getVarByName("C_" + i + "," + j).get(GRB.DoubleAttr.X);
+				double jobTime = model.getVarByName("C_" + j).get(GRB.DoubleAttr.X);
+				for (int i = 0; i < problem.m; i++) {
+					values[i][j] = jobTime;
+				}
+			}
+		} else {
+			for (int i = 0; i < problem.m; i++) {
+				for (int j = 0; j < problem.n; j++) {
+					values[i][j] = model.getVarByName("C_" + i + "," + j).get(GRB.DoubleAttr.X);
+				}
 			}
 		}
+
 		for (int i = 0; i < problem.m; i++) {
 			int[] order = computeOrderByMetric(i, values[i]);
 			// order must be defined at this point...
@@ -202,12 +262,20 @@ public class ThreeApproxLPSimplex {
 		double sum = 0.0;
 		double rhs = 0.0;
 		GRBLinExpr lhs = new GRBLinExpr();
-
-		for (int i = 0; i <= t; i++) {
-			int job = order[i];
-			sum = sum + problem.p[job][dc];
-			sumOfSquares = sumOfSquares + problem.p[job][dc] * problem.p[job][dc];
-			lhs.addTerm(problem.p[job][dc], model.getVarByName("C_" + dc + "," + job));
+		if (formulation.equals("single-permutation")) {
+			for (int i = 0; i <= t; i++) {
+				int job = order[i];
+				sum = sum + problem.p[job][dc];
+				sumOfSquares = sumOfSquares + problem.p[job][dc] * problem.p[job][dc];
+				lhs.addTerm(problem.p[job][dc], model.getVarByName("C_" + job));
+			}
+		} else {
+			for (int i = 0; i <= t; i++) {
+				int job = order[i];
+				sum = sum + problem.p[job][dc];
+				sumOfSquares = sumOfSquares + problem.p[job][dc] * problem.p[job][dc];
+				lhs.addTerm(problem.p[job][dc], model.getVarByName("C_" + dc + "," + job));
+			}
 		}
 		double discount = (1 / (double) problem.dcs[dc].servers.size());
 		rhs = 0.5 * (sumOfSquares +  discount * sum * sum);
